@@ -17,7 +17,7 @@ This project is a code snippet sharing application that demonstrates modern Go w
 1. Clone the repository
 
 ```bash
-go run .
+go run ./cmd/web
 ```
 
 ## Project Structure
