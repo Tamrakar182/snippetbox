@@ -16,6 +16,14 @@ This project is a code snippet sharing application that demonstrates modern Go w
 
 1. Clone the repository
 
+2. Generate a self signed TLS Certificate for HTTPS connection
+
+```bash
+cd tls
+go run generate_cert.go --rsa-bits=2048 --host=localhost
+```
+
+3. Run the Development server
 ```bash
 go run ./cmd/web
 ```
