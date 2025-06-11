@@ -8,12 +8,12 @@ import (
 type UserModel struct{}
 
 var mockUser = &models.User{
-	ID:      1,
-	Name: "Alice",
-	Email: "alice@example.com",
-	Created: time.Now(),
+	ID:             1,
+	Name:           "Alice",
+	Email:          "alice@example.com",
+	Created:        time.Now(),
+	HashedPassword: []byte("This is a hash"),
 }
-
 
 func (m *UserModel) Insert(name, email, password string) error {
 	switch email {
@@ -40,12 +40,21 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	}
 }
 
-func (m *UserModel) Get (id int) (*models.User, error) {
+func (m *UserModel) Get(id int) (*models.User, error) {
 	switch id {
 	case 1:
 		return mockUser, nil
 	default:
 		return nil, models.ErrNoRecord
 	}
+}
 
+func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
+	if id == 1 {
+		if currentPassword != "pa$$word" {
+			return models.ErrInvalidCredentials
+		}
+		return nil
+	}
+	return models.ErrNoRecord
 }

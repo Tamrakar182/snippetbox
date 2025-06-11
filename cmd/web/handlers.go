@@ -26,6 +26,13 @@ type userSignupForm struct {
 	validator.Validator `form:"-"`
 }
 
+type accountPasswordUpdateForm struct {
+	OldPassword         string `form:"oldPassword"`
+	NewPassword         string `form:"newPassword"`
+	ConfirmPassword     string `form:"confirmPassword"`
+	validator.Validator `form:"-"`
+}
+
 type userLoginForm struct {
 	Email               string `form:"email"`
 	Password            string `form:"password"`
@@ -252,4 +259,54 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.User = user
 	app.render(w, http.StatusOK, "account.tmpl", data)
+}
+
+func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = accountPasswordUpdateForm{}
+	app.render(w, http.StatusOK, "password.tmpl", data)
+}
+
+func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http.Request) {
+	var form accountPasswordUpdateForm
+	id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.OldPassword), "oldPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.ConfirmPassword), "confirmPassword", "This field cannot be blank")
+
+	form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "New Password must be at least 8 characters long")
+	form.CheckField(validator.MatchTwoString(form.NewPassword, form.ConfirmPassword), "confirmPassword", "Passwords do not match")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+
+		app.render(w, http.StatusUnprocessableEntity, "password.tmpl", data)
+		return
+	}
+
+	err = app.users.PasswordUpdate(id, form.OldPassword, form.NewPassword)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.AddFieldError("oldPassword", "Wrong Password")
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "password.tmpl", data)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Your password was changed successfully.")
+
+	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
+
 }
