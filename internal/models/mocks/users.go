@@ -2,9 +2,18 @@ package mocks
 
 import (
 	"snippetbox/internal/models"
+	"time"
 )
 
 type UserModel struct{}
+
+var mockUser = &models.User{
+	ID:      1,
+	Name: "Alice",
+	Email: "alice@example.com",
+	Created: time.Now(),
+}
+
 
 func (m *UserModel) Insert(name, email, password string) error {
 	switch email {
@@ -29,4 +38,14 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	default:
 		return false, nil
 	}
+}
+
+func (m *UserModel) Get (id int) (*models.User, error) {
+	switch id {
+	case 1:
+		return mockUser, nil
+	default:
+		return nil, models.ErrNoRecord
+	}
+
 }
