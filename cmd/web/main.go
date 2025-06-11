@@ -23,12 +23,14 @@ type application struct {
 	snippets       models.SnippetModelInterface
 	users          models.UserModelInterface
 	templateCache  map[string]*template.Template
-	formDecoder   *form.Decoder
+	formDecoder    *form.Decoder
+	debugFlag      bool
 	sessionManager *scs.SessionManager
 }
 
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP Network Address")
+	debug := flag.Bool("debug", false, "Show detailed logs")
 	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
 
 	flag.Parse()
@@ -61,7 +63,8 @@ func main() {
 		snippets:       &models.SnippetModel{DB: db},
 		users:          &models.UserModel{DB: db},
 		templateCache:  templateCache,
-		formDecoder:   formDecoder,
+		formDecoder:    formDecoder,
+		debugFlag:      *debug,
 		sessionManager: sessionManager,
 	}
 
